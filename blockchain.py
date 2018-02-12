@@ -1,6 +1,7 @@
 import hashlib
 import json
 import sys
+import requests
 
 from time import time
 from uuid import uuid4
@@ -50,17 +51,17 @@ class Blockchain(object):
 			if block['previous_hash'] != self.hash(last_block):
 				return False
 
-			if not validate_proof(last_block['proof'], block['proof']):
+			if not self.validate_proof(last_block['proof'], block['proof']):
 				return False
 
 
 			last_block = block
-			curren_index += 1
+			current_index += 1
 		
 		return True
 		
 	def resolve_conflicts(self):
-		neigbours = self.nodes
+		neighbours = self.nodes
 		new_chain = None
 		
 		max_length = len(self.chain)	
@@ -70,9 +71,9 @@ class Blockchain(object):
 			
 			if response.status_code == 200:
 				length = response.json()['length']
-				chain = respone.json()['chain']
+				chain = response.json()['chain']
 				
-				if length > max_length and self.validate(chain):
+				if length > max_length and self.valid_chain(chain):
 					max_length = length
 					new_chain = chain
 
@@ -192,7 +193,7 @@ def resolve_nodes():
 	resolved = blockchain.resolve_conflicts()
 		
 	if resolved:
-		resposnse = {
+		response = {
 			'message': 'New chain adopted',
 			'chain': blockchain.chain,
 		}
